@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام ياسر</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e1a;--bg2:#111827;--bg3:#1a2236;--card:#151e2e;--border:#1f2d45;--blue:#3b82f6;--blue2:#1d4ed8;--teal:#14b8a6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;--text:#f1f5f9;--text2:#94a3b8;--text3:#475569;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0;position:fixed;height:100vh;right:0;top:0;z-index:100;transition:transform .3s;overflow-y:auto}
+.sidebar-logo{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.sidebar-logo .name{font-size:16px;font-weight:700}
+.sidebar-logo .sub{font-size:11px;color:var(--text2);margin-top:2px}
+.sync-indicator{font-size:10px;margin-top:6px;padding:3px 8px;border-radius:99px;display:inline-block}
+.sync-ok{background:rgba(34,197,94,.15);color:#86efac}
+.sync-err{background:rgba(239,68,68,.15);color:#fca5a5}
+.sync-ing{background:rgba(245,158,11,.15);color:#fcd34d}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text2);border-right:3px solid transparent;transition:all .2s;font-size:13px}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{color:var(--blue);border-right-color:var(--blue);background:rgba(59,130,246,.08)}
+.main{flex:1;margin-right:220px;padding:24px;max-width:1000px}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:20px}
+.page-title{font-size:22px;font-weight:700}
+.page-sub{color:var(--text2);font-size:13px;margin-top:4px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.card-title{font-size:11px;color:var(--text2);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.stat-val{font-size:26px;font-weight:700}
+.stat-note{font-size:11px;color:var(--text2);margin-top:4px}
+.section-title{font-size:12px;font-weight:700;color:var(--text2);margin:20px 0 10px;text-transform:uppercase;letter-spacing:.5px}
+.prog-wrap{margin-bottom:12px}
+.prog-label{display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px}
+.prog-label span:last-child{color:var(--text2);font-size:12px}
+.prog-bar{height:7px;background:var(--border);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width .5s}
+.task-list{display:flex;flex-direction:column}
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.task-item:last-child{border-bottom:none}
+.task-check{width:20px;height:20px;border:2px solid var(--border);border-radius:6px;cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .2s;color:white}
+.task-check.done{background:var(--green);border-color:var(--green)}
+.task-body{flex:1;min-width:0}
+.task-title-text{font-size:13px;font-weight:600;word-break:break-word}
+.task-title-text.done{text-decoration:line-through;color:var(--text3)}
+.task-meta-text{font-size:11px;color:var(--text2);margin-top:3px}
+.task-actions{display:flex;gap:4px;flex-shrink:0}
+.task-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:3px;transition:color .2s;line-height:1}
+.task-btn:hover{color:var(--text)}.task-btn.del:hover{color:var(--red)}
+.input-field{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.input-field:focus{border-color:var(--blue)}
+.input-field::placeholder{color:var(--text3)}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;transition:all .2s}
+.btn-blue{background:var(--blue);color:white}.btn-blue:hover{background:var(--blue2)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border)}.btn-outline:hover{background:var(--bg3);color:var(--text)}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700}
+.b-blue{background:rgba(59,130,246,.15);color:#93c5fd}
+.b-green{background:rgba(34,197,94,.15);color:#86efac}
+.b-amber{background:rgba(245,158,11,.15);color:#fcd34d}
+.b-red{background:rgba(239,68,68,.15);color:#fca5a5}
+.b-purple{background:rgba(168,85,247,.15);color:#d8b4fe}
+.b-teal{background:rgba(20,184,166,.15);color:#5eead4}
+.date-header{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(20,184,166,.08));border:1px solid rgba(59,130,246,.25);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.date-text{font-size:15px;font-weight:700}
+.date-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.habit-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.habit-row:last-child{border-bottom:none}
+.habit-left{flex:1}
+.habit-name-text{font-size:13px;font-weight:600}
+.habit-check{width:34px;height:34px;border:2px solid var(--border);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s;flex-shrink:0}
+.habit-check.checked{background:var(--green);border-color:var(--green)}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:10px}
+.day-col{background:var(--bg3);border-radius:10px;padding:10px 6px}
+.day-name{font-size:11px;font-weight:700;text-align:center;margin-bottom:8px;color:var(--text2)}
+.day-slot{font-size:10px;padding:4px 5px;border-radius:6px;margin-bottom:4px;text-align:center;line-height:1.3}
+.ds-blue{background:rgba(59,130,246,.15);color:#93c5fd}
+.ds-green{background:rgba(34,197,94,.15);color:#86efac}
+.ds-amber{background:rgba(245,158,11,.15);color:#fcd34d}
+.ds-purple{background:rgba(168,85,247,.15);color:#d8b4fe}
+.ds-red{background:rgba(239,68,68,.15);color:#fca5a5}
+.post-item{display:flex;align-items:center;gap:14px;padding:13px;background:var(--bg3);border-radius:10px;margin-bottom:8px;border:1px solid var(--border)}
+.post-week{font-size:20px;font-weight:900;color:var(--blue);min-width:30px;text-align:center}
+.post-content{flex:1}
+.post-title{font-size:13px;font-weight:700}
+.post-desc{font-size:11px;color:var(--text2);margin-top:3px}
+.post-status{font-size:11px;padding:5px 12px;border-radius:99px;border:none;font-family:'Cairo',sans-serif;font-weight:700;cursor:pointer;white-space:nowrap}
+.ps-done{background:rgba(34,197,94,.15);color:#86efac;cursor:default}
+.ps-pending{background:rgba(245,158,11,.15);color:#fcd34d}
+.note-box{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:13px;font-size:13px;color:var(--text2);line-height:1.8}
+.goal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.goal-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.goal-icon{font-size:22px}
+.goal-name{font-size:15px;font-weight:700}
+.goal-phase{font-size:11px;color:var(--text2);margin-top:3px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:22px;width:100%;max-width:420px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px}
+.modal-row{margin-bottom:12px}
+.modal-label{font-size:12px;color:var(--text2);margin-bottom:5px}
+.modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.hamburger{display:none;position:fixed;top:14px;left:14px;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 11px;cursor:pointer;font-size:18px;color:var(--text)}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+@media(max-width:768px){
+  .sidebar{transform:translateX(100%)}.sidebar.open{transform:translateX(0)}
+  .main{margin-right:0;padding:16px;padding-top:56px}
+  .hamburger{display:flex}.mob-overlay.show{display:block}
+  .week-grid{grid-template-columns:repeat(4,1fr)}
+}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.empty-state{text-align:center;padding:20px;color:var(--text3);font-size:13px}
+.row-between{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">إضافة مهمة</div>
+    <div class="modal-row"><div class="modal-label">المهمة *</div><input class="input-field" id="modal-task" placeholder="اكتب المهمة..." style="width:100%"></div>
+    <div class="modal-row"><div class="modal-label">تفاصيل (اختياري)</div><input class="input-field" id="modal-meta" placeholder="مثال: يومي، عاجل..." style="width:100%"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-blue" onclick="saveModal()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="name">ياسر مدخلي</div>
+    <div class="sub">نظام إدارة الحياة</div>
+    <div class="sync-indicator sync-ing" id="sync-status">⏳ جاري المزامنة...</div>
+  </div>
+  <div class="nav-item active" onclick="nav('dashboard',this)">🏠 الرئيسية</div>
+  <div class="nav-item" onclick="nav('daily',this)">✅ اليومي</div>
+  <div class="nav-item" onclick="nav('goals',this)">🎯 الأهداف</div>
+  <div class="nav-item" onclick="nav('linkedin',this)">💼 LinkedIn</div>
+  <div class="nav-item" onclick="nav('week',this)">📅 الجدول</div>
+  <div class="nav-item" onclick="nav('finance',this)">💰 المالية</div>
+  <div class="nav-item" onclick="nav('content',this)">📱 المحتوى</div>
+  <div class="nav-item" onclick="nav('notes',this)">📝 ملاحظات</div>
+</div>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="date-header">
+    <div><div class="date-text" id="today-date">—</div><div class="date-sub">أبو سلطان — يوم جديد، خطوة جديدة</div></div>
+    <div style="text-align:left"><div style="font-size:11px;color:var(--text2)">المرحلة</div><div style="font-size:13px;font-weight:700;color:var(--blue)">تثبيت الأساس</div></div>
+  </div>
+  <div class="grid g4" style="margin-bottom:18px">
+    <div class="card"><div class="card-title">وظائف مقدّمة</div><div class="stat-val" style="color:var(--red)" id="db-jobs">0</div><div class="stat-note">هذا الأسبوع</div></div>
+    <div class="card"><div class="card-title">LinkedIn</div><div class="stat-val" style="color:var(--blue)" id="db-conn">12</div><div class="stat-note">connections</div></div>
+    <div class="card"><div class="card-title">المتابعون</div><div class="stat-val" style="color:var(--purple)">100K+</div><div class="stat-note">القناة</div></div>
+    <div class="card"><div class="card-title">العادات</div><div class="stat-val" style="color:var(--green)" id="db-habits">0/6</div><div class="stat-note">اليوم</div></div>
+  </div>
+  <div class="section-title">تقدم الأهداف</div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="prog-wrap"><div class="prog-label"><span>💼 الوظيفة</span><span>20%</span></div><div class="prog-bar"><div class="prog-fill" style="width:20%;background:var(--red)"></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>📱 500K متابع</span><span>20%</span></div><div class="prog-bar"><div class="prog-fill" style="width:20%;background:var(--purple)"></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>💪 جسم رياضي</span><span>5%</span></div><div class="prog-bar"><div class="prog-fill" style="width:5%;background:var(--green)"></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>🇬🇧 إنجليزي B1</span><span>25%</span></div><div class="prog-bar"><div class="prog-fill" style="width:25%;background:var(--amber)"></div></div></div>
+    <div class="prog-wrap" style="margin:0"><div class="prog-label"><span>💰 الديون</span><span>0%</span></div><div class="prog-bar"><div class="prog-fill" style="width:0%;background:var(--teal)"></div></div></div>
+  </div>
+  <div class="row-between"><div class="section-title" style="margin:0">مهام اليوم</div><button class="btn btn-blue btn-sm" onclick="openModal('dashboard')">+ مهمة</button></div>
+  <div class="card"><div class="task-list" id="tl-dashboard"></div></div>
+</div>
+
+<!-- DAILY -->
+<div class="page" id="page-daily">
+  <div class="page-header"><div class="page-title">اليومي</div><div class="page-sub">عاداتك + تقديمات الوظائف</div></div>
+  <div class="date-header">
+    <div><div class="date-text" id="daily-date">—</div><div class="date-sub">حدّث عاداتك كل يوم</div></div>
+    <button class="btn btn-outline btn-sm" onclick="resetHabits()">إعادة تعيين</button>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">العادات اليومية</div>
+    <div class="habit-row"><div class="habit-left"><div class="habit-name-text">🔍 تقديم على 3 وظائف</div></div><div class="habit-check" id="h0" onclick="toggleHabit(0)"></div></div>
+    <div class="habit-row"><div class="habit-left"><div class="habit-name-text">💼 إضافة 5 connections على LinkedIn</div></div><div class="habit-check" id="h1" onclick="toggleHabit(1)"></div></div>
+    <div class="habit-row"><div class="habit-left"><div class="habit-name-text">💬 تفاعل مع 3 بوستات صحية</div></div><div class="habit-check" id="h2" onclick="toggleHabit(2)"></div></div>
+    <div class="habit-row"><div class="habit-left"><div class="habit-name-text">🇬🇧 إنجليزي 20 دقيقة</div></div><div class="habit-check" id="h3" onclick="toggleHabit(3)"></div></div>
+    <div class="habit-row"><div class="habit-left"><div class="habit-name-text">💪 تمارين 15 دقيقة</div></div><div class="habit-check" id="h4" onclick="toggleHabit(4)"></div></div>
+    <div class="habit-row"><div class="habit-left"><div class="habit-name-text">❤️ وقت جودة مع العائلة</div></div><div class="habit-check" id="h5" onclick="toggleHabit(5)"></div></div>
+  </div>
+  <div class="row-between"><div class="section-title" style="margin:0">تتبع التقديمات</div><button class="btn btn-blue btn-sm" onclick="openModal('jobs')">+ تقديم</button></div>
+  <div class="card" style="margin-bottom:16px"><div class="task-list" id="tl-jobs"></div></div>
+  <div class="row-between"><div class="section-title" style="margin:0">مهام إضافية</div><button class="btn btn-blue btn-sm" onclick="openModal('daily')">+ مهمة</button></div>
+  <div class="card"><div class="task-list" id="tl-daily"></div></div>
+</div>
+
+<!-- GOALS -->
+<div class="page" id="page-goals">
+  <div class="page-header"><div class="page-title">الأهداف الكبرى</div></div>
+  <div class="goal-card" style="border-color:rgba(239,68,68,.35)">
+    <div class="goal-header"><div class="goal-icon">💼</div><div><div class="goal-name">الوظيفة وتسديد الديون</div><div class="goal-phase"><span class="badge b-red">أولوية قصوى</span></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>التقدم</span><span>20%</span></div><div class="prog-bar"><div class="prog-fill" style="width:20%;background:var(--red)"></div></div></div>
+    <div style="font-size:12px;color:var(--text2);line-height:2;margin-bottom:12px">✅ CV إنجليزي وعربي<br>✅ LinkedIn محدّث<br>◻ تقديم يومي<br>◻ أول مقابلة</div>
+    <div class="row-between"><div style="font-size:12px;color:var(--text2)">مهام مخصصة</div><button class="btn btn-blue btn-sm" onclick="openModal('goal-job')">+ مهمة</button></div>
+    <div class="task-list" id="tl-goal-job" style="margin-top:8px"></div>
+  </div>
+  <div class="goal-card" style="border-color:rgba(168,85,247,.35)">
+    <div class="goal-header"><div class="goal-icon">📱</div><div><div class="goal-name">500K — مليون متابع</div><div class="goal-phase"><span class="badge b-purple">شهر 3-6</span></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>100K → 500K</span><span>20%</span></div><div class="prog-bar"><div class="prog-fill" style="width:20%;background:var(--purple)"></div></div></div>
+    <div style="font-size:12px;color:var(--text2);line-height:2;margin-bottom:12px">✅ القناة 100K<br>◻ 3 بوستات أسبوعياً<br>◻ تحسين الـ hook<br>◻ أول سبونسرشيب</div>
+    <div class="row-between"><div style="font-size:12px;color:var(--text2)">مهام مخصصة</div><button class="btn btn-blue btn-sm" onclick="openModal('goal-content')">+ مهمة</button></div>
+    <div class="task-list" id="tl-goal-content" style="margin-top:8px"></div>
+  </div>
+  <div class="goal-card" style="border-color:rgba(34,197,94,.35)">
+    <div class="goal-header"><div class="goal-icon">💪</div><div><div class="goal-name">جسم رياضي</div><div class="goal-phase"><span class="badge b-green">يبدأ الآن</span></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>التقدم</span><span>5%</span></div><div class="prog-bar"><div class="prog-fill" style="width:5%;background:var(--green)"></div></div></div>
+    <div style="font-size:12px;color:var(--text2);line-height:2;margin-bottom:12px">◻ تمارين Bodyweight يومياً<br>◻ تقليل السكر<br>◻ 8 ساعات نوم</div>
+    <div class="row-between"><div style="font-size:12px;color:var(--text2)">مهام مخصصة</div><button class="btn btn-blue btn-sm" onclick="openModal('goal-fitness')">+ مهمة</button></div>
+    <div class="task-list" id="tl-goal-fitness" style="margin-top:8px"></div>
+  </div>
+  <div class="goal-card" style="border-color:rgba(245,158,11,.35)">
+    <div class="goal-header"><div class="goal-icon">🇬🇧</div><div><div class="goal-name">الإنجليزي B1</div><div class="goal-phase"><span class="badge b-amber">يبدأ الآن</span></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>A2 → B1</span><span>25%</span></div><div class="prog-bar"><div class="prog-fill" style="width:25%;background:var(--amber)"></div></div></div>
+    <div style="font-size:12px;color:var(--text2);line-height:2;margin-bottom:12px">◻ Duolingo يومياً<br>◻ محادثة مع AI<br>◻ اختبار كل شهر</div>
+    <div class="row-between"><div style="font-size:12px;color:var(--text2)">مهام مخصصة</div><button class="btn btn-blue btn-sm" onclick="openModal('goal-english')">+ مهمة</button></div>
+    <div class="task-list" id="tl-goal-english" style="margin-top:8px"></div>
+  </div>
+  <div class="goal-card" style="border-color:rgba(20,184,166,.35)">
+    <div class="goal-header"><div class="goal-icon">💰</div><div><div class="goal-name">تسديد الديون</div><div class="goal-phase"><span class="badge b-teal">بعد الوظيفة</span></div></div></div>
+    <div class="prog-wrap"><div class="prog-label"><span>التقدم</span><span>0%</span></div><div class="prog-bar"><div class="prog-fill" style="width:0%;background:var(--teal)"></div></div></div>
+    <div style="font-size:12px;color:var(--text2);line-height:2;margin-bottom:12px">◻ الحصول على وظيفة<br>◻ التقدم للقرض<br>◻ صندوق طوارئ</div>
+    <div class="row-between"><div style="font-size:12px;color:var(--text2)">مهام مخصصة</div><button class="btn btn-blue btn-sm" onclick="openModal('goal-finance')">+ مهمة</button></div>
+    <div class="task-list" id="tl-goal-finance" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- LINKEDIN -->
+<div class="page" id="page-linkedin">
+  <div class="page-header"><div class="page-title">خطة LinkedIn</div></div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">حالة الحساب</div>
+    <div class="grid g2" style="margin-top:10px">
+      <div style="font-size:13px;line-height:2.1;color:var(--text2)">✅ About محدّث<br>✅ Headline قوي<br>✅ Skills صحية<br>✅ Industry صح<br>✅ Experience مكتمل<br>✅ Open to Work<br>✅ أول بوست منشور</div>
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Connections</div>
+        <div style="font-size:38px;font-weight:900;color:var(--blue)" id="conn-big">12</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">الهدف: 500</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-outline btn-sm" onclick="changeConn(-1)">−</button>
+          <input class="input-field" id="conn-input" type="number" value="12" style="width:70px;text-align:center" oninput="setConn(this.value)">
+          <button class="btn btn-blue btn-sm" onclick="changeConn(1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-title">جدول البوستات</div>
+  <div class="post-item"><div class="post-week">1</div><div class="post-content"><div class="post-title">قصة 12 سنة — الإنفوجرافيك</div><div class="post-desc">هيئة التخصصات + البراند + القناة</div></div><span class="post-status ps-done">✓ منشور</span></div>
+  <div class="post-item"><div class="post-week">2</div><div class="post-content"><div class="post-title">قصة مُمارس والتحول الرقمي</div><div class="post-desc">"شاركت في إطلاق مُمارس — هذا اللي تعلمته"</div></div><button class="post-status ps-pending" id="ps2" onclick="donePost('ps2')">◻ قريباً</button></div>
+  <div class="post-item"><div class="post-week">3</div><div class="post-content"><div class="post-title">دروس بناء البراند</div><div class="post-desc">"بنيت براند ووصّلته لفرعين"</div></div><button class="post-status ps-pending" id="ps3" onclick="donePost('ps3')">◻ قريباً</button></div>
+  <div class="post-item"><div class="post-week">4</div><div class="post-content"><div class="post-title">الذكاء الاصطناعي في العمل</div><div class="post-desc">"كيف أستخدم AI يومياً"</div></div><button class="post-status ps-pending" id="ps4" onclick="donePost('ps4')">◻ قريباً</button></div>
+  <div class="row-between" style="margin-top:16px"><div class="section-title" style="margin:0">مهام LinkedIn</div><button class="btn btn-blue btn-sm" onclick="openModal('linkedin')">+ مهمة</button></div>
+  <div class="card" style="margin-top:10px"><div class="task-list" id="tl-linkedin"></div></div>
+</div>
+
+<!-- WEEK -->
+<div class="page" id="page-week">
+  <div class="page-header"><div class="page-title">الجدول الأسبوعي</div></div>
+  <div class="note-box" style="margin-bottom:16px">⏰ 7-9 صباحاً = وقت أهدافك الكبرى فقط</div>
+  <div class="week-grid">
+    <div class="day-col"><div class="day-name">الأحد</div><div class="day-slot ds-red">7ص وظائف</div><div class="day-slot ds-purple">9ص محتوى</div><div class="day-slot ds-green">عائلة</div><div class="day-slot ds-amber">أوبر</div></div>
+    <div class="day-col"><div class="day-name">الاثنين</div><div class="day-slot ds-amber">7ص إنجليزي</div><div class="day-slot ds-purple">9ص محتوى</div><div class="day-slot ds-green">عائلة</div><div class="day-slot ds-amber">أوبر</div></div>
+    <div class="day-col"><div class="day-name">الثلاثاء</div><div class="day-slot ds-red">7ص وظائف</div><div class="day-slot ds-green">9ص تمارين</div><div class="day-slot ds-green">عائلة</div><div class="day-slot ds-amber">أوبر</div></div>
+    <div class="day-col"><div class="day-name">الأربعاء</div><div class="day-slot ds-amber">7ص إنجليزي</div><div class="day-slot ds-purple">9ص محتوى</div><div class="day-slot ds-green">عائلة</div><div class="day-slot ds-amber">أوبر</div></div>
+    <div class="day-col"><div class="day-name">الخميس</div><div class="day-slot ds-red">7ص وظائف</div><div class="day-slot ds-green">9ص تمارين</div><div class="day-slot ds-green">عائلة</div><div class="day-slot ds-blue">وقت حر</div></div>
+    <div class="day-col"><div class="day-name">الجمعة</div><div class="day-slot ds-green">صلاة+عائلة</div><div class="day-slot ds-blue">راحة</div><div class="day-slot ds-purple">محتوى خفيف</div></div>
+    <div class="day-col"><div class="day-name">السبت</div><div class="day-slot ds-amber">أوبر</div><div class="day-slot ds-purple">محتوى</div><div class="day-slot ds-green">عائلة</div></div>
+  </div>
+  <div class="section-title" style="margin-top:20px">الروتين الصباحي</div>
+  <div class="card">
+    <div class="task-item"><div style="min-width:46px;font-size:12px;color:var(--blue);font-weight:700">7:00</div><div class="task-body"><div class="task-title-text">قهوة + مراجعة أهداف اليوم</div></div></div>
+    <div class="task-item"><div style="min-width:46px;font-size:12px;color:var(--blue);font-weight:700">7:05</div><div class="task-body"><div class="task-title-text">وظائف أو إنجليزي (45د)</div></div></div>
+    <div class="task-item"><div style="min-width:46px;font-size:12px;color:var(--blue);font-weight:700">7:50</div><div class="task-body"><div class="task-title-text">LinkedIn — connections + تفاعل (15د)</div></div></div>
+    <div class="task-item"><div style="min-width:46px;font-size:12px;color:var(--blue);font-weight:700">8:05</div><div class="task-body"><div class="task-title-text">تمارين Bodyweight (15د)</div></div></div>
+    <div class="task-item" style="border:none"><div style="min-width:46px;font-size:12px;color:var(--green);font-weight:700">8:20</div><div class="task-body"><div class="task-title-text">فطور + سلطان ونورا ❤️</div></div></div>
+  </div>
+</div>
+
+<!-- FINANCE -->
+<div class="page" id="page-finance">
+  <div class="page-header"><div class="page-title">المالية</div></div>
+  <div class="grid g2" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">مصادر الدخل</div><div style="font-size:13px;line-height:2.1;color:var(--text2);margin-top:8px">🚗 أوبر — متغير<br>📱 القناة — لا يزال صفر<br>💼 وظيفة — قريباً</div></div>
+    <div class="card"><div class="card-title">الخطة</div><div style="font-size:12px;color:var(--text2);line-height:2;margin-top:8px">1️⃣ الحصول على وظيفة<br>2️⃣ التقدم للقرض<br>3️⃣ تسديد من الأعلى فائدة<br>4️⃣ صندوق طوارئ</div></div>
+  </div>
+  <div class="row-between"><div class="section-title" style="margin:0">تتبع الديون</div><button class="btn btn-blue btn-sm" onclick="openModal('debts')">+ دين</button></div>
+  <div class="card" style="margin-top:10px">
+    <div class="task-list" id="tl-debts"></div>
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--text2)">الإجمالي</span><span style="font-size:18px;font-weight:700;color:var(--red)" id="total-debt">0 ريال</span></div>
+  </div>
+  <div class="row-between" style="margin-top:20px"><div class="section-title" style="margin:0">مهام مالية</div><button class="btn btn-blue btn-sm" onclick="openModal('finance')">+ مهمة</button></div>
+  <div class="card" style="margin-top:10px"><div class="task-list" id="tl-finance"></div></div>
+</div>
+
+<!-- CONTENT -->
+<div class="page" id="page-content">
+  <div class="page-header"><div class="page-title">المحتوى والقناة</div></div>
+  <div class="grid g3" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">المتابعون</div><div class="stat-val" style="color:var(--purple)">100K+</div><div class="stat-note">الهدف: 500K</div></div>
+    <div class="card"><div class="card-title">بوستات الأسبوع</div><div class="stat-val" style="color:var(--blue)">0</div><div class="stat-note">الهدف: 3</div></div>
+    <div class="card"><div class="card-title">دخل القناة</div><div class="stat-val" style="color:var(--green)">0</div><div class="stat-note">الهدف: سبونسرشيب</div></div>
+  </div>
+  <div class="section-title">أدوات التحريك الأرخص</div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="task-item"><div class="task-body"><div class="task-title-text">Kling AI</div><div class="task-meta-text">توليد فيديو من صورة — أرخص من RunwayML</div></div><span class="badge b-green">موصى به</span></div>
+    <div class="task-item"><div class="task-body"><div class="task-title-text">Hailuo / MiniMax</div><div class="task-meta-text">مجاني جزئياً — جودة ممتازة</div></div><span class="badge b-green">موصى به</span></div>
+    <div class="task-item"><div class="task-body"><div class="task-title-text">Pika Labs</div><div class="task-meta-text">رخيص وسريع</div></div><span class="badge b-blue">جيد</span></div>
+    <div class="task-item" style="border:none"><div class="task-body"><div class="task-title-text">CapCut AI</div><div class="task-meta-text">مجاني للتيك توك</div></div><span class="badge b-blue">مجاني</span></div>
+  </div>
+  <div class="row-between"><div class="section-title" style="margin:0">مهام المحتوى</div><button class="btn btn-blue btn-sm" onclick="openModal('content')">+ مهمة</button></div>
+  <div class="card" style="margin-top:10px"><div class="task-list" id="tl-content"></div></div>
+</div>
+
+<!-- NOTES -->
+<div class="page" id="page-notes">
+  <div class="page-header"><div class="page-title">ملاحظات</div><div class="page-sub">تحفظ تلقائياً على السحابة</div></div>
+  <div class="card"><textarea class="input-field" id="notes-area" style="min-height:500px;resize:vertical;line-height:1.9;width:100%;border:none;background:transparent;padding:0" placeholder="اكتب هنا..."></textarea></div>
+</div>
+
+</div></div>
+
+<script>
+// ===== SUPABASE CONFIG =====
+const SUPABASE_URL = 'https://casdoaywcihudpgwhadj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_tnwjreoi5NDHYH-1dtd_Uw_x385vGqf';
+const HEADERS = {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+
+async function dbGet(key) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/data?key=eq.${key}&select=value`, {headers:HEADERS});
+    const d = await r.json();
+    return d.length ? JSON.parse(d[0].value) : null;
+  } catch(e) { return null; }
+}
+
+async function dbSet(key, value) {
+  try {
+    const exists = await fetch(`${SUPABASE_URL}/rest/v1/data?key=eq.${key}&select=id`, {headers:HEADERS});
+    const rows = await exists.json();
+    const body = JSON.stringify({key, value: JSON.stringify(value), updated_at: new Date().toISOString()});
+    if (rows.length) {
+      await fetch(`${SUPABASE_URL}/rest/v1/data?key=eq.${key}`, {method:'PATCH', headers:{...HEADERS,'Prefer':'return=minimal'}, body});
+    } else {
+      await fetch(`${SUPABASE_URL}/rest/v1/data`, {method:'POST', headers:{...HEADERS,'Prefer':'return=minimal'}, body});
+    }
+    setSyncStatus('ok');
+  } catch(e) { setSyncStatus('err'); }
+}
+
+function setSyncStatus(s) {
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  if(s==='ok'){el.className='sync-indicator sync-ok';el.textContent='✓ محفوظ'}
+  else if(s==='err'){el.className='sync-indicator sync-err';el.textContent='✗ خطأ في الحفظ'}
+  else{el.className='sync-indicator sync-ing';el.textContent='⏳ جاري الحفظ...'}
+}
+
+// ===== STATE =====
+let S = {tasks:{},habits:{},conn:12,notes:'',posts:{}};
+const TODAY = new Date().toDateString();
+const MAPS = [
+  ['dashboard','tl-dashboard'],['daily','tl-daily'],['jobs','tl-jobs'],
+  ['goal-job','tl-goal-job'],['goal-content','tl-goal-content'],
+  ['goal-fitness','tl-goal-fitness'],['goal-english','tl-goal-english'],
+  ['goal-finance','tl-goal-finance'],['linkedin','tl-linkedin'],
+  ['finance','tl-finance'],['content','tl-content'],['debts','tl-debts'],
+];
+
+let saveTimer = null;
+function scheduleSave() {
+  setSyncStatus('ing');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => { await dbSet('state', S); }, 1000);
+}
+
+// ===== NAV =====
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  if(window.innerWidth<=768) closeSidebar();
+  renderAll();
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('mob-overlay').classList.toggle('show')}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('mob-overlay').classList.remove('show')}
+
+// ===== DATE =====
+function setDates() {
+  const d=new Date();
+  const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const str=`${days[d.getDay()]}، ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  ['today-date','daily-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=str});
+}
+
+// ===== MODAL =====
+let mCtx='', mIdx=-1;
+function openModal(ctx, idx, title, meta) {
+  mCtx=ctx; mIdx=idx>=0?idx:-1;
+  document.getElementById('modal-title').textContent=mIdx>=0?'تعديل':'إضافة';
+  document.getElementById('modal-task').value=title||'';
+  document.getElementById('modal-meta').value=meta||'';
+  document.getElementById('modal').classList.add('show');
+  setTimeout(()=>document.getElementById('modal-task').focus(),80);
+}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function saveModal() {
+  const t=document.getElementById('modal-task').value.trim();
+  if(!t) return;
+  const m=document.getElementById('modal-meta').value.trim();
+  if(!S.tasks[mCtx]) S.tasks[mCtx]=[];
+  if(mIdx>=0) S.tasks[mCtx][mIdx]={title:t,meta:m,done:S.tasks[mCtx][mIdx]?.done||false};
+  else S.tasks[mCtx].push({title:t,meta:m,done:false});
+  scheduleSave(); closeModal(); renderAll();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+// ===== TASKS =====
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function renderTasks(ctx, elId) {
+  const el=document.getElementById(elId);
+  if(!el) return;
+  const tasks=S.tasks[ctx]||[];
+  if(!tasks.length){el.innerHTML='<div class="empty-state">اضغط + لإضافة مهمة</div>';return}
+  el.innerHTML=tasks.map((t,i)=>`
+    <div class="task-item">
+      <div class="task-check${t.done?' done':''}" onclick="toggleT('${ctx}',${i})">${t.done?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-title-text${t.done?' done':''}">${t.title}</div>
+        ${t.meta?`<div class="task-meta-text">${t.meta}</div>`:''}
+      </div>
+      <div class="task-actions">
+        <button class="task-btn" onclick="openModal('${ctx}',${i},'${esc(t.title)}','${esc(t.meta)}')">✏️</button>
+        <button class="task-btn del" onclick="delT('${ctx}',${i})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+function toggleT(ctx,i){if(S.tasks[ctx]){S.tasks[ctx][i].done=!S.tasks[ctx][i].done;scheduleSave();renderAll()}}
+function delT(ctx,i){if(S.tasks[ctx]){S.tasks[ctx].splice(i,1);scheduleSave();renderAll()}}
+
+// ===== DEBTS =====
+function renderDebts() {
+  const el=document.getElementById('tl-debts');
+  if(!el) return;
+  const debts=S.tasks['debts']||[];
+  let total=0;
+  if(!debts.length){el.innerHTML='<div class="empty-state">لا توجد ديون مسجّلة</div>'}
+  else{
+    el.innerHTML=debts.map((d,i)=>{
+      const amt=parseFloat(d.meta)||0; total+=amt;
+      return`<div class="task-item">
+        <div class="task-body">
+          <div class="task-title-text">${d.title}</div>
+          ${d.meta?`<div class="task-meta-text" style="color:var(--red)">${parseFloat(d.meta).toLocaleString('ar-SA')} ريال</div>`:''}
+        </div>
+        <div class="task-actions">
+          <button class="task-btn" onclick="openModal('debts',${i},'${esc(d.title)}','${esc(d.meta)}')">✏️</button>
+          <button class="task-btn del" onclick="delT('debts',${i})">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  const t=document.getElementById('total-debt');
+  if(t) t.textContent=total.toLocaleString('ar-SA')+' ريال';
+}
+
+// ===== HABITS =====
+function toggleHabit(i) {
+  if(!S.habits[TODAY]) S.habits[TODAY]=[false,false,false,false,false,false];
+  S.habits[TODAY][i]=!S.habits[TODAY][i];
+  scheduleSave(); renderHabits();
+}
+function resetHabits(){S.habits[TODAY]=[false,false,false,false,false,false];scheduleSave();renderHabits()}
+function renderHabits() {
+  const h=S.habits[TODAY]||[false,false,false,false,false,false];
+  let count=0;
+  for(let i=0;i<6;i++){
+    const el=document.getElementById('h'+i);
+    if(!el) continue;
+    if(h[i]){el.classList.add('checked');el.textContent='✓';count++}
+    else{el.classList.remove('checked');el.textContent=''}
+  }
+  const sc=document.getElementById('db-habits');
+  if(sc) sc.textContent=count+'/6';
+}
+
+// ===== CONNECTIONS =====
+function changeConn(d){S.conn=Math.max(0,(S.conn||12)+d);scheduleSave();renderConn()}
+function setConn(v){S.conn=Math.max(0,parseInt(v)||0);scheduleSave();renderConn()}
+function renderConn(){
+  ['conn-big','db-conn'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=S.conn});
+  const inp=document.getElementById('conn-input');if(inp)inp.value=S.conn;
+}
+
+// ===== POSTS =====
+function donePost(id){
+  S.posts[id]=true; scheduleSave();
+  const el=document.getElementById(id);
+  if(el){el.textContent='✓ منشور';el.className='post-status ps-done';el.disabled=true}
+}
+function renderPosts(){
+  ['ps2','ps3','ps4'].forEach(id=>{
+    if(S.posts[id]){const el=document.getElementById(id);if(el){el.textContent='✓ منشور';el.className='post-status ps-done';el.disabled=true}}
+  });
+}
+
+// ===== NOTES =====
+function renderNotes(){const el=document.getElementById('notes-area');if(el)el.value=S.notes||''}
+let notesTimer=null;
+document.addEventListener('input',e=>{
+  if(e.target.id==='notes-area'){
+    S.notes=e.target.value;
+    clearTimeout(notesTimer);
+    notesTimer=setTimeout(()=>scheduleSave(),800);
+  }
+});
+
+// ===== JOBS COUNT =====
+function renderJobsCount(){const el=document.getElementById('db-jobs');if(el)el.textContent=(S.tasks['jobs']||[]).length}
+
+// ===== RENDER ALL =====
+function renderAll(){
+  MAPS.forEach(([ctx,id])=>{
+    if(ctx==='debts') renderDebts();
+    else renderTasks(ctx,id);
+  });
+  renderHabits(); renderConn(); renderPosts(); renderNotes(); renderJobsCount();
+}
+
+// ===== INIT =====
+window.onload = async function() {
+  setDates();
+  setSyncStatus('ing');
+  const saved = await dbGet('state');
+  if(saved){
+    S = {...S, ...saved};
+    if(!S.tasks) S.tasks={};
+    if(!S.habits) S.habits={};
+    if(!S.posts) S.posts={};
+    setSyncStatus('ok');
+  } else {
+    S.tasks['dashboard']=[
+      {title:'تقدّم على 3 وظائف اليوم',meta:'هيئة التخصصات / مستشفيات / بيت.كوم',done:false},
+      {title:'إضافة 5 connections على LinkedIn',meta:'من القطاع الصحي',done:false},
+      {title:'تفاعل مع 3 بوستات صحية',meta:'يومي',done:false},
+      {title:'إنجليزي 20 دقيقة',meta:'Duolingo أو محادثة',done:false},
+      {title:'تمارين 15 دقيقة في البيت',meta:'Bodyweight',done:false},
+    ];
+    await dbSet('state', S);
+  }
+  renderAll();
+};
+</script>
+</body>
+</html>
